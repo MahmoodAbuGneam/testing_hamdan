@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Home</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        #map {
+            height: 600px; /* Increased size */
+            width: 700px;
+            border: 4px solid black; /* Black border */
+            margin: 20px auto; /* Center the map */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for design */
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reports</h1>
+
+    <!-- Map to show the locations -->
+    <div id="map"></div>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([31.252973, 34.791462], 13); // Centered on Beersheba
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Custom red marker icon URL
+        var redIcon = L.icon({
+            iconUrl: 'https://img.icons8.com/ios/452/marker.png',  // Use a regular map pin image
+            iconSize: [32, 32],  // Size of the icon
+            iconAnchor: [16, 32],  // Anchor point of the icon (bottom center)
+            popupAnchor: [0, -32]  // Popup anchor point (just above the icon)
+        });
+
+        // Add markers for each report location with the custom red icon
+        {% for report in reports %}
+            if ({{ report.latitude }} && {{ report.longitude }}) {
+                L.marker([{{ report.latitude }}, {{ report.longitude }}], { icon: redIcon })
+                    .bindPopup("<b>{{ report.description }}</b>")  // Only show description in popup
+                    .addTo(map);
+            }
+        {% endfor %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+   # Python cache files
+   __pycache__/
+   *.py[cod]
+
+   # Virtual environment
+   venv/
+   /venv
+   venv
+   .env
+   venv/*
+
+   # Django migrations
+   */migrations/*.py
+   */migrations/*.pyc
+
+   # Database files
+   db.sqlite3
+
+   # Static files
+   staticfiles/
+
+   # Media files
+   media/
+
+   # IDE specific files
+   .idea/
+   .vscode/
+   *.swp

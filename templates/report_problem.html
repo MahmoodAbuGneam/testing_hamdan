@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report an Issue</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 300px;
+            width: 300px;
+            border: 4px solid black; /* Black border */
+            margin: 20px auto; /* Center the map */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for design */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #location-display {
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Custom popup label styling */
+        .leaflet-popup-content {
+            font-size: 12px; /* Smaller text */
+            color: #333; /* Text color */
+            max-width: 150px; /* Limit the width of the popup */
+            padding: 5px 10px; /* Reduced padding */
+            word-wrap: break-word; /* Wrap long words */
+            text-align: center; /* Center the content */
+        }
+
+        .leaflet-popup-tip {
+            display: none; /* Hide the popup arrow */
+        }
+    </style>
+</head>
+<body>
+    <h1>Report an Issue</h1>
+
+    <!-- Report form -->
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <!-- Leaflet Map Container -->
+        <div id="map"></div>
+
+        <!-- Display selected location -->
+        <p><strong>Location:</strong> <span id="location-display">Not selected</span></p>
+
+        <!-- Hidden input to store the selected location -->
+        <input type="hidden" id="location" name="location">
+
+        <button type="submit">Submit Report</button>
+    </form>
+
+    <script>
+        // Initialize the map, set to Beersheba (31.252973, 34.791462)
+        var map = L.map('map').setView([31.252973, 34.791462], 13); // Centered on Beersheba
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add a draggable marker at the center (Beersheba)
+        var marker = L.marker([31.252973, 34.791462], { draggable: true }).addTo(map);
+
+        // Update the hidden input and location display when the marker is dragged
+        marker.on('dragend', function (event) {
+            var latLng = event.target.getLatLng();
+            document.getElementById('location').value = latLng.lat + ', ' + latLng.lng;
+            document.getElementById('location-display').textContent = latLng.lat + ', ' + latLng.lng;
+        });
+
+        // Allow the user to click on the map to set the marker
+        map.on('click', function (event) {
+            var latLng = event.latlng;
+            marker.setLatLng(latLng);
+            document.getElementById('location').value = latLng.lat + ', ' + latLng.lng;
+            document.getElementById('location-display').textContent = latLng.lat + ', ' + latLng.lng;
+        });
+
+        // Custom red marker icon URL
+        var redIcon = L.icon({
+            iconUrl: 'https://img.icons8.com/ios/452/marker.png',  // Use a regular map pin image
+            iconSize: [32, 32],  // Size of the icon
+            iconAnchor: [16, 32],  // Anchor point of the icon (bottom center)
+            popupAnchor: [0, -32]  // Popup anchor point (just above the icon)
+        });
+
+        // Add markers for each report location with the custom red icon
+        {% for report in reports %}
+            if ({{ report.latitude }} && {{ report.longitude }}) {
+                L.marker([{{ report.latitude }} , {{ report.longitude }}], { icon: redIcon })
+                    .bindPopup("<b>{{ report.description }}</b><br><small>{{ report.reported_by }}</small>")  // Description and who reported
+                    .addTo(map);
+            }
+        {% endfor %}
+    </script>
+</body>
+</html>

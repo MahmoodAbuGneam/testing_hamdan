@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Home</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        #map {
+            height: 600px; /* Increased size */
+            width: 700px;
+            border: 4px solid black; /* Black border */
+            margin: 20px auto; /* Center the map */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for design */
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reports</h1>
+
+    <!-- Map to show the locations -->
+    <div id="map"></div>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([31.252973, 34.791462], 13); // Centered on Beersheba
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Custom red marker icon URL
+        var redIcon = L.icon({
+            iconUrl: 'https://img.icons8.com/ios/452/marker.png',  // Use a regular map pin image
+            iconSize: [32, 32],  // Size of the icon
+            iconAnchor: [16, 32],  // Anchor point of the icon (bottom center)
+            popupAnchor: [0, -32]  // Popup anchor point (just above the icon)
+        });
+
+        // Store markers in a list for dynamic management
+        var markers = [];
+
+        // Add markers for each report location with the custom red icon
+        {% for report in reports %}
+        if ({{ report.latitude }} && {{ report.longitude }}) {
+            // Create a marker
+            var marker = L.marker([{{ report.latitude }}, {{ report.longitude }}], { icon: redIcon }).addTo(map);
+
+            // Bind a popup with a delete button
+            marker.bindPopup(`
+                <b>{{ report.description }}</b><br>
+                <button class="delete-btn" onclick="deleteReport('{{ report.id }}', ${markers.length})">Delete</button>
+            `);
+
+            // Add marker to the markers array
+            markers.push(marker);
+        }
+        {% endfor %}
+
+        // Function to delete a report
+        function deleteReport(reportId, markerIndex) {
+            // Remove marker from the map
+            map.removeLayer(markers[markerIndex]);
+
+            // Send a request to the server to delete the report
+            fetch(`/delete_report/${reportId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}', // Django CSRF token for secure requests
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Report deleted successfully.');
+                } else {
+                    alert('Failed to delete the report.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the report.');
+            });
+        }
+    </script>
+</body>
+</html>
